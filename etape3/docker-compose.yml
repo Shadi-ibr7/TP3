@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  data:
+    image: mariadb:11
+    container_name: data
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      MARIADB_DATABASE: tp3
+      MARIADB_USER: tp3
+      MARIADB_PASSWORD: tp3pass
+    volumes:
+      - dbdata:/var/lib/mysql
+      # Si tu as des scripts d'init SQL, décommente la ligne suivante et crée ./db/init
+      # - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - tp3net
+
+  script:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: script
+    volumes:
+      - ./app:/app
+    depends_on:
+      - data
+    networks:
+      - tp3net
+
+  http:
+    image: nginx:1.25
+    container_name: http
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app:/app
+      - ./config/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - script
+    networks:
+      - tp3net
+
+networks:
+  tp3net:
+
+volumes:
+  dbdata:
